@@ -17,7 +17,7 @@ The Azure SQL Database, Azure Logic App, and other necessary resources will be d
 
 ```bash
 export LOCATION=eastus2
-export RESOURCEGROUP_BASE_NAME=far-rg-test1
+export RESOURCEGROUP_BASE_NAME=rg-github-metrics-collector
 export RESOURCEGROUP=${RESOURCEGROUP_BASE_NAME}-${LOCATION}
 az group create --name ${RESOURCEGROUP} --location ${LOCATION}
 
