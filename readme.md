@@ -44,9 +44,9 @@ So far, we have an error in the connector to the database, a new one need to be 
 
 1. Navigate to the resource group using the Azure Portal.
 2. Select the Azure Logic App
-3. Select the Design Logic App
+3. Select the Logic app designer
 4. Run it
-5. Select Historical Execution, and see if the workflow was succeced executed
+5. Select Run History, and see if the workflow was succeced executed
 6. Select the SQL Database
 7. Select the Query Editor
 8. Enter your username and password. 
@@ -60,7 +60,8 @@ az group delete --name ${RESOURCEGROUP} --yes
 
 ## Pending
 
-1. Diagnostic Log in Logic App against a Log Analitic Workpace
-2. Move Database connector to a Active directory base one
-3. Se if the script could be executed during deploy
-4. Check security flags 
+* Move Database connector to a Active directory base one
+* Se if the script could be executed during deploy
+* Check security flags  
+* Star Model, adapt store procedures
+* Report query examples

@@ -39,6 +39,7 @@ var frequency = 'Day'
 var interval = '1'
 var workflowSchema = 'https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#'
 var connections_sql_name = 'sql'
+var logAnalyticsWorkspaceName = 'GitHubMetrics-${uniqueName}'
 
 // -- Resources
 
@@ -493,5 +494,45 @@ resource sqlDB 'Microsoft.Sql/servers/databases@2023-08-01-preview' = {
     zoneRedundant: false
     readScale: 'Disabled'
     requestedBackupStorageRedundancy: 'Local'
+  }
+}
+
+resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2021-06-01' = {
+  name: logAnalyticsWorkspaceName
+  location: location
+  properties: {
+    sku: {
+      name: 'PerGB2018' // Example SKU, adjust as needed
+    }
+    retentionInDays: 30 // Adjust retention period as needed
+  }
+}
+
+// Diagnostic setting for the Logic App
+resource logicAppDiagnosticSetting 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+  name: '${logicAppName}-diag'
+  scope: gitHubMetrics
+  properties: {
+    workspaceId: logAnalyticsWorkspace.id
+    logs: [
+      {
+        category: 'WorkflowRuntime'
+        enabled: true
+        retentionPolicy: {
+          enabled: false
+          days: 0
+        }
+      }
+    ]
+    metrics: [
+      {
+        category: 'AllMetrics'
+        enabled: true
+        retentionPolicy: {
+          enabled: false
+          days: 0
+        }
+      }
+    ]
   }
 }
