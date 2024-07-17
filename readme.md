@@ -7,7 +7,7 @@ export RESOURCEGROUP=${RESOURCEGROUP_BASE_NAME}-${LOCATION}
 az group create --name ${RESOURCEGROUP} --location ${LOCATION}
 
 
-az deployment group create --resource-group ${RESOURCEGROUP} -f ./main.bicep -p token=<your access token> administratorLoginPassword=changeMe123!
+az deployment group create --resource-group ${RESOURCEGROUP} -f ./main.bicep -p token=<your access token> administratorLoginPassword=changeMe123! repositories='["samples", "iaas-baseline", "aks-baseline"]'
 
 az group delete --name ${RESOURCEGROUP} --yes
 ```

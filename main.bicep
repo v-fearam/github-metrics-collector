@@ -15,10 +15,7 @@ param token string
 param owner string = 'mspnp'
 
 @description('the array of repos to collect metrics')
-param repositories array = [
-  'samples'
-  'iaas-baseline'
-]
+param repositories array 
 
 @description('Location for all resources.')
 param location string = resourceGroup().location
@@ -212,7 +209,7 @@ resource gitHubMetrics 'Microsoft.Logic/workflows@2019-05-01' = {
                 }
               }
             }
-            Parse_JSON_Body: {
+            Parse_JSON_Views_Body: {
               runAfter: {
                 HTTP_View: [
                   'Succeeded'
@@ -256,13 +253,13 @@ resource gitHubMetrics 'Microsoft.Logic/workflows@2019-05-01' = {
                 }
               }
             }
-            For_each_day: {
-              foreach: '@body(\'Parse_JSON_Body\')?[\'views\']'
+            For_each_view_day: {
+              foreach: '@body(\'Parse_JSON_Views_Body\')?[\'views\']'
               actions: {
                 View_Data_in_a_Day: {
                   type: 'ParseJson'
                   inputs: {
-                    content: '@items(\'For_each_day\')'
+                    content: '@items(\'For_each_view_day\')'
                     schema: {
                       properties: {
                         count: {
@@ -279,7 +276,7 @@ resource gitHubMetrics 'Microsoft.Logic/workflows@2019-05-01' = {
                     }
                   }
                 }
-                'Execute_stored_procedure_(V2)': {
+                Save_view_data: {
                   inputs: {
                     body: {
                       account: '@variables(\'account\')'
@@ -305,7 +302,7 @@ resource gitHubMetrics 'Microsoft.Logic/workflows@2019-05-01' = {
                 }
               }
               runAfter: {
-                Parse_JSON_Body: [
+                Parse_JSON_Views_Body: [
                   'Succeeded'
                 ]
               }
@@ -342,6 +339,105 @@ resource gitHubMetrics 'Microsoft.Logic/workflows@2019-05-01' = {
                   transferMode: 'Chunked'
                 }
               }
+            }
+            Parse_JSON_Clones_Body: {
+              runAfter: {
+                HTTP_Clones: [
+                  'Succeeded'
+                ]
+              }
+              type: 'ParseJson'
+              inputs: {
+                content: '@body(\'HTTP_Clones\')'
+                schema: {
+                  properties: {
+                    count: {
+                      type: 'integer'
+                    }
+                    uniques: {
+                      type: 'integer'
+                    }
+                    clones: {
+                      items: {
+                        properties: {
+                          count: {
+                            type: 'integer'
+                          }
+                          timestamp: {
+                            type: 'string'
+                          }
+                          uniques: {
+                            type: 'integer'
+                          }
+                        }
+                        required: [
+                          'timestamp'
+                          'count'
+                          'uniques'
+                        ]
+                        type: 'object'
+                      }
+                      type: 'array'
+                    }
+                  }
+                  type: 'object'
+                }
+              }
+            }
+            For_each_clone_day: {
+              foreach: '@body(\'Parse_JSON_Clones_Body\')?[\'clones\']'
+              actions: {
+                Clone_Data_in_a_Day: {
+                  type: 'ParseJson'
+                  inputs: {
+                    content: '@items(\'For_each_clone_day\')'
+                    schema: {
+                      properties: {
+                        count: {
+                          type: 'integer'
+                        }
+                        timestamp: {
+                          type: 'string'
+                        }
+                        uniques: {
+                          type: 'integer'
+                        }
+                      }
+                      type: 'object'
+                    }
+                  }
+                }
+                Save_clone_data: {
+                  runAfter: {
+                    Clone_Data_in_a_Day: [
+                      'Succeeded'
+                    ]
+                  }
+                  type: 'ApiConnection'
+                  inputs: {
+                    host: {
+                      connection: {
+                        name: '@parameters(\'$connections\')[\'sql\'][\'connectionId\']'
+                      }
+                    }
+                    method: 'post'
+                    body: {
+                      account: '@variables(\'account\')'
+                      count: '@body(\'Clone_Data_in_a_Day\')?[\'count\']'
+                      repository: '@{items(\'For_each_repo_-Clones\')}'
+                      timestamp: '@body(\'Clone_Data_in_a_Day\')?[\'timestamp\']'
+                      uniques: '@body(\'Clone_Data_in_a_Day\')?[\'uniques\']'
+                    }
+                    path: '/v2/datasets/@{encodeURIComponent(encodeURIComponent(\'default\'))},@{encodeURIComponent(encodeURIComponent(\'default\'))}/procedures/@{encodeURIComponent(encodeURIComponent(\'[dbo].[MergeRepoClones]\'))}'
+                  }
+                }
+              }
+              runAfter: {
+                Parse_JSON_Clones_Body: [
+                  'Succeeded'
+                ]
+              }
+              type: 'Foreach'
             }
           }
           runAfter: {

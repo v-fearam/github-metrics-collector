@@ -41,3 +41,25 @@ BEGIN
         VALUES (source.account, source.repository, source.count, source.uniques, source.timestamp);
 END;
 GO;
+
+
+CREATE PROCEDURE MergeRepoClones
+    @account VARCHAR(255),
+    @repository VARCHAR(255),
+    @count INT,
+    @uniques INT,
+    @timestamp DATETIME
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    MERGE repo_clones AS target
+    USING (SELECT @account AS account, @repository AS repository, @count AS count, @uniques AS uniques, @timestamp AS timestamp) AS source
+    ON (target.account = source.account AND target.repository = source.repository AND target.timestamp = source.timestamp)
+    WHEN MATCHED THEN 
+        UPDATE SET count = source.count, uniques = source.uniques
+    WHEN NOT MATCHED THEN
+        INSERT (account, repository, count, uniques, timestamp)
+        VALUES (source.account, source.repository, source.count, source.uniques, source.timestamp);
+END;
+GO;
