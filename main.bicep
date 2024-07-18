@@ -15,7 +15,7 @@ param token string
 param owner string = 'mspnp'
 
 @description('the array of repos to collect metrics')
-param repositories array 
+param repositories array
 
 @description('Location for all resources.')
 param location string = resourceGroup().location
@@ -28,13 +28,13 @@ param administratorLogin string = 'myadminname'
 param administratorLoginPassword string
 
 @description('The Microsoft Entra ID user to be database admin')
-param user string 
+param user string
 
 @description('The object id of the previous user')
-param userObjectId string 
+param userObjectId string
 
 @description('The tenant id of the previous user')
-param userTenantId string 
+param userTenantId string
 
 // --- Variables
 var uniqueName = uniqueString(resourceGroup().id)
@@ -61,23 +61,32 @@ resource connections_sql_resource 'Microsoft.Web/connections@2016-06-01' = {
   name: connections_sql_name
   location: location
   properties: {
+    authenticatedUser: {}
+    connectionState: 'Enabled'
+    parameterValueSet: {
+      name: 'oauthMI'
+      values: {}
+    }
+    alternativeParameterValues: {}
     displayName: 'MetricDatabase'
     statuses: [
       {
-        status: 'Connected'
+        status: 'Ready'
       }
     ]
     customParameterValues: {}
     api: {
+      name: 'sql'
+      displayName: 'SQL Server'
       id: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Web/locations/${location}/managedApis/${connections_sql_name}'
+      type: 'Microsoft.Web/locations/managedApis'
     }
-    parameterValues: {
-      server: sqlDB.name
-      database: '${sqlServer.name}.database.windows.net'
-      authType: 'sqlAuthentication'
-      username: administratorLogin
-      password: administratorLoginPassword
-    }
+    testLinks: [
+      {
+        requestUri: 'https://management.azure.com:443/subscriptions${subscription().subscriptionId}/resourceGroups/${resourceGroup().name}/providers/Microsoft.Web/connections/${connections_sql_name}/extensions/proxy/testconnection?api-version=2016-06-01'
+        method: 'get'
+      }
+    ]
   }
 }
 
@@ -301,7 +310,7 @@ resource gitHubMetrics 'Microsoft.Logic/workflows@2019-05-01' = {
                       }
                     }
                     method: 'post'
-                    path: '/v2/datasets/@{encodeURIComponent(encodeURIComponent(\'default\'))},@{encodeURIComponent(encodeURIComponent(\'default\'))}/procedures/@{encodeURIComponent(encodeURIComponent(\'MergeRepoViews\'))}'
+                    path: '/v2/datasets/@{encodeURIComponent(encodeURIComponent(\'${sqlServer.name}.database.windows.net\'))},@{encodeURIComponent(encodeURIComponent(\'${sqlDB.name}\'))}/procedures/@{encodeURIComponent(encodeURIComponent(\'MergeRepoViews\'))}'
                   }
                   runAfter: {
                     View_Data_in_a_Day: [
@@ -438,7 +447,7 @@ resource gitHubMetrics 'Microsoft.Logic/workflows@2019-05-01' = {
                       timestamp: '@body(\'Clone_Data_in_a_Day\')?[\'timestamp\']'
                       uniques: '@body(\'Clone_Data_in_a_Day\')?[\'uniques\']'
                     }
-                    path: '/v2/datasets/@{encodeURIComponent(encodeURIComponent(\'default\'))},@{encodeURIComponent(encodeURIComponent(\'default\'))}/procedures/@{encodeURIComponent(encodeURIComponent(\'[dbo].[MergeRepoClones]\'))}'
+                    path: '/v2/datasets/@{encodeURIComponent(encodeURIComponent(\'${sqlServer.name}.database.windows.net\'))},@{encodeURIComponent(encodeURIComponent(\'${sqlDB.name}\'))}/procedures/@{encodeURIComponent(encodeURIComponent(\'[dbo].[MergeRepoClones]\'))}'
                   }
                 }
               }
@@ -463,9 +472,15 @@ resource gitHubMetrics 'Microsoft.Logic/workflows@2019-05-01' = {
       '$connections': {
         value: {
           sql: {
-            id: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Web/locations/${location}/managedApis/${connections_sql_resource.name}'
+            id: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Web/locations/${location}/managedApis/sql'
             connectionId: connections_sql_resource.id
             connectionName: 'sql'
+            connectionProperties: {
+              authentication: {
+                type: 'ManagedServiceIdentity'
+                identity: logicAppUserIdentity.id
+              }
+            }
           }
         }
       }
@@ -507,7 +522,7 @@ resource sqlServer 'Microsoft.Sql/servers@2023-08-01-preview' = {
     properties: {
       azureADOnlyAuthentication: true
     }
-    dependsOn:[
+    dependsOn: [
       activeDirectoryAdmin
     ]
   }
@@ -568,4 +583,3 @@ resource logicAppDiagnosticSetting 'Microsoft.Insights/diagnosticSettings@2021-0
     ]
   }
 }
-
