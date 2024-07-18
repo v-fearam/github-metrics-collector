@@ -486,9 +486,9 @@ resource sqlDB 'Microsoft.Sql/servers/databases@2023-08-01-preview' = {
   name: sqlDBName
   location: location
   sku: {
-    name: 'Standard'
-    tier: 'Standard'
-    capacity: 10
+    name: 'Basic'
+    tier: 'Basic'
+    capacity: 5
   }
   properties: {
     zoneRedundant: false

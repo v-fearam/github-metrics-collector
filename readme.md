@@ -2,11 +2,11 @@
 
 This project uses the GitHub API to collect traffic metrics from a set of repositories within an organization. It deploys an Azure Logic App to consume the GitHub API, and the gathered information is saved in a SQL database.  
 The traffic data is available for the past 12 days. This implementation helps preserve the data for ongoing analysis over time.  
-The application collects  [views](https://docs.github.com/en/rest/metrics/traffic?apiVersion=2022-11-28#get-page-views) and [clones](https://docs.github.com/en/rest/metrics/traffic?apiVersion=2022-11-28#get-repository-clones) information from the repositories.
+The application collects [views](https://docs.github.com/en/rest/metrics/traffic?apiVersion=2022-11-28#get-page-views) and [clones](https://docs.github.com/en/rest/metrics/traffic?apiVersion=2022-11-28#get-repository-clones) information from the repositories.
 
 ## Getting a GitHub Token
 
-To use the GitHub API, you need a personal access token. 
+To use the GitHub API, you need a personal access token.
 Follow the steps described in this guide to [creating a fine-grained personal access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token).  
 Please note that, according to the API documentation, you need to include `"Administration" repository permissions (read)`.  
 Please make sure to keep your token secure.
@@ -49,8 +49,46 @@ So far, we have an error in the connector to the database, a new one need to be 
 5. Select Run History, and see if the workflow was succeced executed
 6. Select the SQL Database
 7. Select the Query Editor
-8. Enter your username and password. 
+8. Enter your username and password.
 9. See the data in the tables
+
+## Report
+
+A star model was created in order to query the data. There are to dimentional tables and one fact table.
+
+![GitHub Metrics](./GitHub-metrics.jpg)
+
+The following is a query example on the star model. It returns the sum of values by account-repository and by week of the year.
+
+```sql
+SELECT
+    dates.year,
+    dates.month,
+    dates.week,
+    repo.account,
+    repo.repository,
+    SUM(fact.countViews) AS TotalCountViews,
+    SUM(fact.uniquesViews) AS TotalUniquesViews,
+    SUM(fact.countClones) AS TotalCountClones,
+    SUM(fact.uniquesClones) AS TotalUniquesClones
+FROM
+    fact_views_clones fact
+INNER JOIN
+    dim_date dates ON fact.dateId = dates.id
+INNER JOIN
+    dim_repo repo ON fact.repoId = repo.id
+GROUP BY
+    dates.year,
+    dates.month,
+    dates.week,
+    fact.repoId,
+    repo.account,
+    repo.repository
+ORDER BY
+    repo.account,
+    repo.repository,
+    dates.week
+```
 
 ## Clean up
 
@@ -60,8 +98,7 @@ az group delete --name ${RESOURCEGROUP} --yes
 
 ## Pending
 
-* Move Database connector to a Active directory base one
-* Se if the script could be executed during deploy
-* Check security flags  
-* Star Model, adapt store procedures
-* Report query examples
+- Move Database connector to a Active directory base one
+- See I can resolve the deploy script to be able to connect the database after deploy
+- Check security flags
+
