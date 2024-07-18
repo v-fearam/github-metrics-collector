@@ -15,15 +15,35 @@ Please make sure to keep your token secure.
 
 The Azure SQL Database, Azure Logic App, and other necessary resources will be deployed.
 
+The database is going to be Microsoft Entra ID integrated. A user name, user object id, and tenat id are going to be needed.
+
+```bash
+export USER=eastus<your data>
+export USER_OBJECTID=<your data>
+export USER_TENANTID=<your data>
+```
+
+The resource group creation
+
 ```bash
 export LOCATION=eastus2
 export RESOURCEGROUP_BASE_NAME=rg-github-metrics-collector
 export RESOURCEGROUP=${RESOURCEGROUP_BASE_NAME}-${LOCATION}
 az group create --name ${RESOURCEGROUP} --location ${LOCATION}
+```
 
-## Please add the GitHub token, the GitHub account, and the array of repos array to be collected
+Please add the GitHub token, the GitHub account, and the array of repos array to be collected, then proceed to deploy.
 
-az deployment group create --resource-group ${RESOURCEGROUP} -f ./main.bicep -p token=<GitHub Token> administratorLoginPassword=changeMe123! owner=mspnp repositories='["samples", "iaas-baseline", "aks-baseline"]'
+```bash
+az deployment group create --resource-group ${RESOURCEGROUP}  \
+                        -f ./main.bicep  \
+                        -p token=<GitHub Token>  \
+                        administratorLoginPassword=changeMe123!  \
+                        owner=mspnp  \
+                        repositories='["samples", "iaas-baseline", "aks-baseline"]'  \
+                        user=${USER} \
+                        userObjectId=${USER_OBJECTID} \
+                        userTenantId=${USER_TENANTID}
 ```
 
 ## Create Databse Objects

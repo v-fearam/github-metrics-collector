@@ -27,6 +27,15 @@ param administratorLogin string = 'myadminname'
 @secure()
 param administratorLoginPassword string
 
+@description('The Microsoft Entra ID user to be database admin')
+param user string 
+
+@description('The object id of the previous user')
+param userObjectId string 
+
+@description('The tenant id of the previous user')
+param userTenantId string 
+
 // --- Variables
 var uniqueName = uniqueString(resourceGroup().id)
 
@@ -471,6 +480,7 @@ resource sqlServer 'Microsoft.Sql/servers@2023-08-01-preview' = {
     administratorLogin: administratorLogin
     administratorLoginPassword: administratorLoginPassword
     minimalTlsVersion: '1.2'
+    publicNetworkAccess: 'Enabled'
   }
   resource allowAzureServicesRule 'firewallRules' = {
     name: 'AllowAllWindowsAzureIps'
@@ -478,6 +488,27 @@ resource sqlServer 'Microsoft.Sql/servers@2023-08-01-preview' = {
       startIpAddress: '0.0.0.0'
       endIpAddress: '0.0.0.0'
     }
+  }
+  identity: {
+    type: 'SystemAssigned'
+  }
+  resource activeDirectoryAdmin 'administrators@2023-08-01-preview' = {
+    name: 'ActiveDirectory'
+    properties: {
+      administratorType: 'ActiveDirectory'
+      login: user
+      sid: userObjectId
+      tenantId: userTenantId
+    }
+  }
+  resource sqlADOnlyAuth 'azureADOnlyAuthentications@2023-08-01-preview' = {
+    name: 'Default'
+    properties: {
+      azureADOnlyAuthentication: true
+    }
+    dependsOn:[
+      activeDirectoryAdmin
+    ]
   }
 }
 
@@ -536,3 +567,4 @@ resource logicAppDiagnosticSetting 'Microsoft.Insights/diagnosticSettings@2021-0
     ]
   }
 }
+
