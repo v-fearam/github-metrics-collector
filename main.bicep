@@ -480,6 +480,7 @@ resource sqlServer 'Microsoft.Sql/servers@2023-08-01-preview' = {
     administratorLogin: administratorLogin
     administratorLoginPassword: administratorLoginPassword
     minimalTlsVersion: '1.2'
+    version: '12.0'
     publicNetworkAccess: 'Enabled'
   }
   resource allowAzureServicesRule 'firewallRules' = {
