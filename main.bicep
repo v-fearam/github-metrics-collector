@@ -25,7 +25,7 @@ param administratorLogin string = 'myadminname'
 
 @description('The administrator password of the SQL logical server.')
 @secure()
-param administratorLoginPassword string
+param administratorLoginPassword string = newGuid()
 
 @description('The Microsoft Entra ID user to be database admin')
 param user string

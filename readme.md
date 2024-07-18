@@ -15,7 +15,7 @@ Please make sure to keep your token secure.
 
 The Azure SQL Database, Azure Logic App, and other necessary resources will be deployed.
 
-The database is going to be Microsoft Entra ID integrated. A user name, user object id, and tenat id are going to be needed.
+The database is going to be Microsoft Entra ID integrated (Only Microsoft Entra ID users will be enabled to login). A user name, user object id, and tenat id are going to be needed.
 
 ```bash
 export USER=eastus<your data>
@@ -52,10 +52,10 @@ az deployment group create --resource-group ${RESOURCEGROUP}  \
 2. Select the SQL Database
 3. Select the Query Editor
 4. Log in using your Azure Account. The first time you do this, you’ll need to configure the firewall by following the portal instructions.
-5. Copy the code from ./scripts.sql and paste it into the Query Editor.
+5. Copy the code from ./scripts.sql and paste it into the Query Editor. This includes the tables and stored procedures that the Azure Logic App will call to save the data.
 6. Execute the script.
 7. Review the created table and explore any stored procedures.
-8. Grant permissions to the Logic App User Managed Identity. Copy the code from ./UserManageIdentity.sql and paste it into the Query Editor.
+8. **Grant permissions to the Logic App User Managed Identity**. Copy the code from ./UserManageIdentity.sql and paste it into the Query Editor.
 9. Execute the script.
 
 ## Test the Workflow
@@ -65,6 +65,8 @@ az deployment group create --resource-group ${RESOURCEGROUP}  \
 3. Open the Logic App Designer.
 4. Run the workflow.
 5. Select **Run History** and check if the workflow executed successfully.
+
+Note: It may take some time to recognize that the permission to the identity was granted. If it fails, wait a little and try again later.
 
 ## Report
 
