@@ -15,15 +15,35 @@ Please make sure to keep your token secure.
 
 The Azure SQL Database, Azure Logic App, and other necessary resources will be deployed.
 
+The database is going to be Microsoft Entra ID integrated (Only Microsoft Entra ID users will be enabled to login). A user name, user object id, and tenat id are going to be needed.
+
+```bash
+export USER=eastus<your data>
+export USER_OBJECTID=<your data>
+export USER_TENANTID=<your data>
+```
+
+The resource group creation
+
 ```bash
 export LOCATION=eastus2
 export RESOURCEGROUP_BASE_NAME=rg-github-metrics-collector
 export RESOURCEGROUP=${RESOURCEGROUP_BASE_NAME}-${LOCATION}
 az group create --name ${RESOURCEGROUP} --location ${LOCATION}
+```
 
-## Please add the GitHub token, the GitHub account, and the array of repos array to be collected
+Please add the GitHub token, the GitHub account, and the array of repos array to be collected, then proceed to deploy.
 
-az deployment group create --resource-group ${RESOURCEGROUP} -f ./main.bicep -p token=<GitHub Token> administratorLoginPassword=changeMe123! owner=mspnp repositories='["samples", "iaas-baseline", "aks-baseline"]'
+```bash
+az deployment group create --resource-group ${RESOURCEGROUP}  \
+                        -f ./main.bicep  \
+                        -p token=<GitHub Token>  \
+                        administratorLoginPassword=changeMe123!  \
+                        owner=mspnp  \
+                        repositories='["samples", "iaas-baseline", "aks-baseline"]'  \
+                        user=${USER} \
+                        userObjectId=${USER_OBJECTID} \
+                        userTenantId=${USER_TENANTID}
 ```
 
 ## Create Databse Objects
@@ -31,26 +51,22 @@ az deployment group create --resource-group ${RESOURCEGROUP} -f ./main.bicep -p 
 1. Navigate to the resource group using the Azure Portal.
 2. Select the SQL Database
 3. Select the Query Editor
-4. Enter your username and password. The first time you do this, you’ll need to configure the firewall by following the portal instructions.
-5. Copy the code from ./scripts.sql, and paste on the Query Editor
-6. Execute
-7. Review the table that was created and explore any store procedures
-
-## Error
-
-So far, we have an error in the connector to the database, a new one need to be created using Azure Portal and associate with the activities.
+4. Log in using your Azure Account. The first time you do this, you’ll need to configure the firewall by following the portal instructions.
+5. Copy the code from ./scripts.sql and paste it into the Query Editor. This includes the tables and stored procedures that the Azure Logic App will call to save the data.
+6. Execute the script.
+7. Review the created table and explore any stored procedures.
+8. **Grant permissions to the Logic App User Managed Identity**. Copy the code from ./UserManageIdentity.sql and paste it into the Query Editor.
+9. Execute the script.
 
 ## Test the Workflow
 
 1. Navigate to the resource group using the Azure Portal.
 2. Select the Azure Logic App
-3. Select the Logic app designer
-4. Run it
-5. Select Run History, and see if the workflow was succeced executed
-6. Select the SQL Database
-7. Select the Query Editor
-8. Enter your username and password.
-9. See the data in the tables
+3. Open the Logic App Designer.
+4. Run the workflow.
+5. Select **Run History** and check if the workflow executed successfully.
+
+Note: It may take some time to recognize that the permission to the identity was granted. If it fails, wait a little and try again later.
 
 ## Report
 
@@ -58,7 +74,11 @@ A star model was created in order to query the data. There are to dimentional ta
 
 ![GitHub Metrics](./GitHub-metrics.jpg)
 
-The following is a query example on the star model. It returns the sum of values by account-repository and by week of the year.
+- Select the SQL Database
+- Open the Query Editor.
+- Log in using your Azure Account.
+
+The following is an example query on the star model. It returns the sum of values by account-repository and by week of the year.
 
 ```sql
 SELECT
@@ -98,7 +118,4 @@ az group delete --name ${RESOURCEGROUP} --yes
 
 ## Pending
 
-- Move Database connector to a Active directory base one
-- See I can resolve the deploy script to be able to connect the database after deploy
 - Check security flags
-
