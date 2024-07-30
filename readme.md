@@ -46,7 +46,7 @@ az deployment group create --resource-group ${RESOURCEGROUP}  \
                         userTenantId=${USER_TENANTID}
 ```
 
-## Create Databse Objects
+## Create Database Objects
 
 1. Navigate to the resource group using the Azure Portal.
 2. Select the SQL Database
