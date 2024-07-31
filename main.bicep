@@ -543,6 +543,8 @@ resource sqlDB 'Microsoft.Sql/servers/databases@2023-08-01-preview' = {
     requestedBackupStorageRedundancy: 'Local'
   }
   dependsOn:[
+    sqlServer::sqlADOnlyAuth
+    sqlServer::activeDirectoryAdmin
     auditingSettings
     sqlVulnerabilityAssessment
   ]
