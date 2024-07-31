@@ -542,6 +542,10 @@ resource sqlDB 'Microsoft.Sql/servers/databases@2023-08-01-preview' = {
     readScale: 'Disabled'
     requestedBackupStorageRedundancy: 'Local'
   }
+  dependsOn:[
+    auditingSettings
+    sqlVulnerabilityAssessment
+  ]
 }
 
 resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2021-06-01' = {
@@ -579,6 +583,11 @@ resource auditingSettings 'Microsoft.Sql/servers/auditingSettings@2021-11-01-pre
   properties: {
     state: 'Enabled'
     isAzureMonitorTargetEnabled: true
+    auditActionsAndGroups: [
+      'SUCCESSFUL_DATABASE_AUTHENTICATION_GROUP'
+      'FAILED_DATABASE_AUTHENTICATION_GROUP'
+      'BATCH_COMPLETED_GROUP'
+    ]
   }
 }
 
@@ -588,6 +597,9 @@ resource sqlVulnerabilityAssessment 'Microsoft.Sql/servers/sqlVulnerabilityAsses
   properties: {
     state: 'Enabled'
   }
+  dependsOn:[
+    auditingSettings
+  ]
 }
 
 // Diagnostic setting for the Logic App
