@@ -112,7 +112,7 @@ ORDER BY
 
 ## Improve Database Security Information
 
-On database Server navigate to Security-Auditing and select the Log Analytics which is deployed in the resource group. Then, on the database instance, navigate to Security-Auditing and select Azure SQL Auditing to the Log Analytics in the resource group.
+On database Server navigate to Security-Auditing and select the Log Analytics which is deployed in the resource group.
 
 ## Clean up
 

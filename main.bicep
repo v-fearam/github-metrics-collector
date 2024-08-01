@@ -528,6 +528,14 @@ resource sqlServer 'Microsoft.Sql/servers@2023-08-01-preview' = {
   }
 }
 
+resource diagnosticSettingsSqlServer 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+  scope: sqlServer
+  name: '${sqlServer.name}-diag'
+  properties: {
+    workspaceId: logAnalyticsWorkspace.id
+  }
+}
+
 resource sqlDB 'Microsoft.Sql/servers/databases@2023-08-01-preview' = {
   parent: sqlServer
   name: sqlDBName
@@ -542,12 +550,29 @@ resource sqlDB 'Microsoft.Sql/servers/databases@2023-08-01-preview' = {
     readScale: 'Disabled'
     requestedBackupStorageRedundancy: 'Local'
   }
-  dependsOn:[
+  dependsOn: [
     sqlServer::sqlADOnlyAuth
     sqlServer::activeDirectoryAdmin
-    auditingSettings
+    auditingServerSettings
     sqlVulnerabilityAssessment
   ]
+}
+
+resource auditingDbSettings 'Microsoft.Sql/servers/databases/auditingSettings@2023-08-01-preview' = {
+  parent: sqlDB
+  name: 'default'
+  properties: {
+    retentionDays: 0
+    auditActionsAndGroups: [
+      'SUCCESSFUL_DATABASE_AUTHENTICATION_GROUP'
+      'FAILED_DATABASE_AUTHENTICATION_GROUP'
+      'BATCH_COMPLETED_GROUP'
+    ]
+    isAzureMonitorTargetEnabled: true
+    isManagedIdentityInUse: false
+    state: 'Enabled'
+    storageAccountSubscriptionId: '00000000-0000-0000-0000-000000000000'
+  }
 }
 
 resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2021-06-01' = {
@@ -561,9 +586,9 @@ resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2021-06
   }
 }
 
-resource diagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+resource diagnosticSettingsSqlDb 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
   scope: sqlDB
-  name: '${sqlDBName}-diag'
+  name: '${sqlDB.name}-diag'
   properties: {
     workspaceId: logAnalyticsWorkspace.id
     logs: [
@@ -579,7 +604,7 @@ resource diagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-pr
   }
 }
 
-resource auditingSettings 'Microsoft.Sql/servers/auditingSettings@2021-11-01-preview' = {
+resource auditingServerSettings 'Microsoft.Sql/servers/auditingSettings@2021-11-01-preview' = {
   parent: sqlServer
   name: 'default'
   properties: {
@@ -599,9 +624,28 @@ resource sqlVulnerabilityAssessment 'Microsoft.Sql/servers/sqlVulnerabilityAsses
   properties: {
     state: 'Enabled'
   }
-  dependsOn:[
-    auditingSettings
+  dependsOn: [
+    auditingServerSettings
   ]
+}
+
+resource solutions_SQLAuditing_githubmetrics 'Microsoft.OperationsManagement/solutions@2015-11-01-preview' = {
+  name: 'SolutionSQLAuditing${logAnalyticsWorkspace.name}'
+  location: location
+  plan: {
+    name: 'SQLAuditing${sqlDB.name}'
+    promotionCode: ''
+    product: 'SQLAuditing'
+    publisher: 'Microsoft'
+  }
+  properties: {
+    workspaceResourceId: logAnalyticsWorkspace.id
+    containedResources: [
+      '${resourceId('Microsoft.OperationalInsights/workspaces', logAnalyticsWorkspace.name)}/views/SQLSecurityInsights'
+      '${resourceId('Microsoft.OperationalInsights/workspaces', logAnalyticsWorkspace.name)}/views/SQLAccessToSensitiveData'
+    ]
+    referencedResources: []
+  }
 }
 
 // Diagnostic setting for the Logic App
