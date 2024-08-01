@@ -1,6 +1,7 @@
 # Collecting GitHub Metrics
 
 This project uses the GitHub API to collect traffic metrics from a set of repositories within an organization. It deploys an Azure Logic App to consume the GitHub API, and the gathered information is saved in a SQL database.  
+The Azure Logic App is configured in Consumption mode because it only needs to run for a few minutes each day, making it much more cost-effective than using a Standard App Service plan. However, [the Consumption mode](](https://learn.microsoft.com/azure/logic-apps/single-tenant-overview-compare)) does not support the use of private endpoints for accessing the database.  
 The traffic data is available for the past 12 days. This implementation helps preserve the data for ongoing analysis over time.  
 The application collects [views](https://docs.github.com/en/rest/metrics/traffic?apiVersion=2022-11-28#get-page-views) and [clones](https://docs.github.com/en/rest/metrics/traffic?apiVersion=2022-11-28#get-repository-clones) information from the repositories.
 
