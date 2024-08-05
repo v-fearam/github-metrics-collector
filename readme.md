@@ -93,11 +93,11 @@ SELECT
     SUM(fact.countClones) AS TotalCountClones,
     SUM(fact.uniquesClones) AS TotalUniquesClones
 FROM
-    fact_views_clones fact
+    ghb.fact_views_clones fact
 INNER JOIN
-    dim_date dates ON fact.dateId = dates.id
+    ghb.dim_date dates ON fact.dateId = dates.id
 INNER JOIN
-    dim_repo repo ON fact.repoId = repo.id
+    ghb.dim_repo repo ON fact.repoId = repo.id
 GROUP BY
     dates.year,
     dates.month,

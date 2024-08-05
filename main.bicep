@@ -52,8 +52,8 @@ var logAnalyticsWorkspaceName = 'GitHubMetrics-${uniqueName}'
 
 // -- Resources
 
-resource logicAppUserIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2021-09-30-preview' = {
-  name: 'logicAppUserIdentity'
+resource ghbLogicAppUserIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2021-09-30-preview' = {
+  name: 'ghbLogicAppUserIdentity'
   location: resourceGroup().location
 }
 
@@ -99,7 +99,7 @@ resource gitHubMetrics 'Microsoft.Logic/workflows@2019-05-01' = {
   identity: {
     type: 'UserAssigned'
     userAssignedIdentities: {
-      '${logicAppUserIdentity.id}': {}
+      '${ghbLogicAppUserIdentity.id}': {}
     }
   }
   properties: {
@@ -310,7 +310,7 @@ resource gitHubMetrics 'Microsoft.Logic/workflows@2019-05-01' = {
                       }
                     }
                     method: 'post'
-                    path: '/v2/datasets/@{encodeURIComponent(encodeURIComponent(\'${sqlServer.name}.database.windows.net\'))},@{encodeURIComponent(encodeURIComponent(\'${sqlDB.name}\'))}/procedures/@{encodeURIComponent(encodeURIComponent(\'MergeRepoViews\'))}'
+                    path: '/v2/datasets/@{encodeURIComponent(encodeURIComponent(\'${sqlServer.name}.database.windows.net\'))},@{encodeURIComponent(encodeURIComponent(\'${sqlDB.name}\'))}/procedures/@{encodeURIComponent(encodeURIComponent(\'[ghb].[MergeRepoViews]\'))}'
                   }
                   runAfter: {
                     View_Data_in_a_Day: [
@@ -447,7 +447,7 @@ resource gitHubMetrics 'Microsoft.Logic/workflows@2019-05-01' = {
                       timestamp: '@body(\'Clone_Data_in_a_Day\')?[\'timestamp\']'
                       uniques: '@body(\'Clone_Data_in_a_Day\')?[\'uniques\']'
                     }
-                    path: '/v2/datasets/@{encodeURIComponent(encodeURIComponent(\'${sqlServer.name}.database.windows.net\'))},@{encodeURIComponent(encodeURIComponent(\'${sqlDB.name}\'))}/procedures/@{encodeURIComponent(encodeURIComponent(\'[dbo].[MergeRepoClones]\'))}'
+                    path: '/v2/datasets/@{encodeURIComponent(encodeURIComponent(\'${sqlServer.name}.database.windows.net\'))},@{encodeURIComponent(encodeURIComponent(\'${sqlDB.name}\'))}/procedures/@{encodeURIComponent(encodeURIComponent(\'[ghb].[MergeRepoClones]\'))}'
                   }
                 }
               }
@@ -478,7 +478,7 @@ resource gitHubMetrics 'Microsoft.Logic/workflows@2019-05-01' = {
             connectionProperties: {
               authentication: {
                 type: 'ManagedServiceIdentity'
-                identity: logicAppUserIdentity.id
+                identity: ghbLogicAppUserIdentity.id
               }
             }
           }
